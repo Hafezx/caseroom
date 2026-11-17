@@ -5,7 +5,7 @@ import BriefingPanel from './components/BriefingPanel.vue'
 import Waveform from './components/Waveform.vue'
 import SkillsReflection from './components/SkillsReflection.vue'
 import { nextPhase, type InterviewPhase } from './lib/session'
-import { addTranscriptMessage, type TranscriptTurn } from './lib/transcript'
+import { addTranscriptMessage, applyAgentResponseCorrection, type TranscriptTurn } from './lib/transcript'
 
 const phase = ref<InterviewPhase>('ready')
 const transcript = ref<TranscriptTurn[]>([])
@@ -97,6 +97,14 @@ async function startInterview() {
         }
       },
       onMessage: (message) => handleMessage(message, generation),
+      onAgentResponseCorrection: (correction) => {
+        if (generation !== sessionGeneration) return
+        transcript.value = applyAgentResponseCorrection(transcript.value, {
+          responseId: correction.response_id,
+          originalText: correction.original_agent_response,
+          correctedText: correction.corrected_agent_response,
+        })
+      },
       onModeChange: ({ mode: nextMode }) => { if (generation === sessionGeneration) mode.value = nextMode },
       onDisconnect: () => handleDisconnect(generation),
       onError: () => {

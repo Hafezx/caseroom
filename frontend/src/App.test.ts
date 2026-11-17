@@ -6,6 +6,7 @@ import App from './App.vue'
 const sdkState = vi.hoisted(() => ({
   startError: null as Error | null,
   triggerError: null as null | (() => void),
+  triggerCorrection: null as null | (() => void),
   endCount: 0,
   delayDisconnect: false,
   pendingDisconnect: null as null | (() => void),
@@ -21,6 +22,12 @@ vi.mock('@elevenlabs/client', () => ({
       onMessage?: (value: { role: 'agent'; source: 'ai'; message: string; event_id: number }) => void
       onDisconnect?: (value: { reason: 'user' }) => void
       onError?: (message: string) => void
+      onAgentResponseCorrection?: (value: {
+        original_agent_response: string
+        corrected_agent_response: string
+        event_id: number
+        response_id?: string
+      }) => void
     }) => {
       sdkState.startCount += 1
       if (sdkState.deferFirstStart && sdkState.startCount === 1) {
@@ -29,6 +36,11 @@ vi.mock('@elevenlabs/client', () => ({
       }
       if (sdkState.startError) throw sdkState.startError
       sdkState.triggerError = () => options.onError?.('Connection lost')
+      sdkState.triggerCorrection = () => options.onAgentResponseCorrection?.({
+        original_agent_response: 'Hello, thanks for meeting me.',
+        corrected_agent_response: 'Hello, thanks for seeing me.',
+        event_id: 2,
+      })
       options.onConnect?.({ conversationId: 'conv-test' })
       options.onMessage?.({ role: 'agent', source: 'ai', message: 'Hello, thanks for meeting me.', event_id: 1 })
       return { endSession: async () => {
@@ -44,6 +56,7 @@ describe('CaseRoom practice flow', () => {
   beforeEach(() => {
     sdkState.startError = null
     sdkState.triggerError = null
+    sdkState.triggerCorrection = null
     sdkState.endCount = 0
     sdkState.delayDisconnect = false
     sdkState.pendingDisconnect = null
@@ -79,6 +92,19 @@ describe('CaseRoom practice flow', () => {
 
     await wrapper.get('button[data-action="retry"]').trigger('click')
     expect(wrapper.text()).toContain('Ready to begin')
+    expect(wrapper.text()).not.toContain('Hello, thanks for meeting me.')
+    wrapper.unmount()
+  })
+
+  it('shows a corrected agent response in the reflection transcript', async () => {
+    const wrapper = mount(App)
+    await wrapper.get('button[data-action="start"]').trigger('click')
+    await flushPromises()
+    sdkState.triggerCorrection?.()
+    await wrapper.get('button[data-action="end"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Hello, thanks for seeing me.')
     expect(wrapper.text()).not.toContain('Hello, thanks for meeting me.')
     wrapper.unmount()
   })
