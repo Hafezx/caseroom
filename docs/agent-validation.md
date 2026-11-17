@@ -9,4 +9,6 @@ On 17 November 2026, I published the private **CaseRoom — Maya Patel** ElevenL
 
 This validates two prompt behaviors in dashboard chat. It does not establish that the browser voice flow works; that requires a separate end-to-end session through the app.
 
+The local FastAPI service also requested a signed URL for this private agent and received a successful response from ElevenLabs. The restricted key needed ElevenAgents Write permission for that endpoint. This verifies backend authentication, but not the microphone and browser conversation path.
+
 The agent is private and requires signed URLs. Its configured maximum conversation duration is five minutes, its daily call limit is 20, call-audio storage is off, its retention period is one day, and transcript/PII deletion is enabled. These settings apply to the demo agent in my account; anyone running the repository should review their own agent settings.

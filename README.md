@@ -1,5 +1,7 @@
 # CaseRoom
 
+[![CI](https://github.com/Hafezx/caseroom/actions/workflows/ci.yml/badge.svg)](https://github.com/Hafezx/caseroom/actions/workflows/ci.yml)
+
 CaseRoom is a standalone voice practice demo for an SQE2-style client interview. An ElevenLabs Agent plays a fictional client, while a Vue app shows the conversation and helps the candidate reflect on their interviewing skills. A Python API keeps ElevenLabs credentials on the server and creates short-lived voice sessions.
 
 The first scenario is an original Property Practice case about a delayed flat purchase. CaseRoom is an independent practice tool and is not affiliated with the Solicitors Regulation Authority. It does not provide legal advice, official scoring, or pass predictions.
@@ -15,7 +17,7 @@ The first scenario is an original Property Practice case about a delayed flat pu
 You need Python 3.11+, Node.js, [uv](https://docs.astral.sh/uv/), an ElevenLabs account, and an ElevenLabs Agent configured as **private**. Agent voice usage may consume plan credits; see [ElevenLabs Agents pricing](https://elevenlabs.io/pricing/agents).
 
 1. Create an ElevenLabs Agent. Use the original [client prompt](agent/client-prompt.md), including its separate first message. Enable authentication so sessions require a [signed URL](https://elevenlabs.io/docs/eleven-agents/customization/authentication). Enable transcript message events in the agent's Advanced settings if they are off. For privacy, review the agent's [retention](https://elevenlabs.io/docs/eleven-agents/customization/privacy/retention) and [audio-saving](https://elevenlabs.io/docs/eleven-agents/customization/privacy/audio-saving) settings.
-2. Copy `backend/.env.example` to `backend/.env`. Put your API key and private agent ID in `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID`. Never commit `.env`.
+2. Copy `backend/.env.example` to `backend/.env`. Put your API key and private agent ID in `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID`. The signed-URL endpoint currently requires **ElevenAgents Write** permission on the key. Limit its lifetime and credits, and never commit `.env`.
 3. In one terminal, run the backend:
 
    ```bash
