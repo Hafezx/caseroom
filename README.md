@@ -6,6 +6,8 @@ CaseRoom is a standalone voice practice demo for an SQE2-style client interview.
 
 The first scenario is an original Property Practice case about a delayed flat purchase. CaseRoom is an independent practice tool and is not affiliated with the Solicitors Regulation Authority. It does not provide legal advice, official scoring, or pass predictions.
 
+![CaseRoom practice screen](docs/screenshots/practice.png)
+
 ## What you can do
 
 - Read a short partner briefing and interview Maya Patel by voice.
