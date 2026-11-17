@@ -12,9 +12,37 @@ export interface AgentResponseCorrection {
   correctedText: string
 }
 
+// ElevenLabs can include delivery and nonverbal cues in agent text. Match only
+// recognized cues so ordinary bracketed speech remains in the transcript.
+const nonverbalCues = new Set([
+  'angry', 'annoyed', 'anxious', 'calm', 'concerned', 'curious', 'empathetic',
+  'excited', 'frustrated', 'happy', 'mischievously', 'nervous', 'reassuring',
+  'sad', 'sarcastic', 'surprised', 'sympathetic', 'thoughtful', 'worried',
+  'chuckles', 'chuckling', 'clears throat', 'coughs', 'crying', 'gasps',
+  'gasping', 'gulps', 'laughing', 'laughs', 'sighing', 'sighs', 'snorts',
+  'starts crying', 'starts laughing', 'swallows', 'wheezing',
+  'exhales', 'exhales sharply', 'inhales', 'inhales deeply', 'long pause',
+  'pause', 'pauses', 'short pause', 'silence', 'shouting', 'shouts',
+  'softly', 'whispering', 'whispers',
+])
+
+function cleanTranscriptText(text: string, removeAgentCues = true): string {
+  const withoutCues = removeAgentCues
+    ? text.replace(/\[([^\[\]\r\n]{1,60})\]/g, (match, label: string) => {
+        const cue = label.trim().toLowerCase().replace(/\s+/g, ' ')
+        return nonverbalCues.has(cue) ? ' ' : match
+      })
+    : text
+  return withoutCues.replace(/\s+/g, ' ').trim()
+}
+
+function hasSpokenContent(text: string): boolean {
+  return /[\p{L}\p{N}]/u.test(text)
+}
+
 export function addTranscriptMessage(turns: TranscriptTurn[], message: TranscriptTurn): TranscriptTurn[] {
-  const text = message.text.trim()
-  if (!text) return turns
+  const text = cleanTranscriptText(message.text, message.role === 'agent')
+  if (!hasSpokenContent(text)) return turns
 
   const turn: TranscriptTurn = message.id
     ? { role: message.role, text, id: message.id }
@@ -37,9 +65,9 @@ export function applyAgentResponseCorrection(
   turns: TranscriptTurn[],
   correction: AgentResponseCorrection,
 ): TranscriptTurn[] {
-  const originalText = correction.originalText.trim()
-  const correctedText = correction.correctedText.trim()
-  if (!originalText || !correctedText) return turns
+  const originalText = cleanTranscriptText(correction.originalText)
+  const correctedText = cleanTranscriptText(correction.correctedText)
+  if (!originalText) return turns
 
   const findLatest = (matches: (turn: TranscriptTurn) => boolean): number => {
     for (let position = turns.length - 1; position >= 0; position -= 1) {
@@ -53,7 +81,9 @@ export function applyAgentResponseCorrection(
   const index = matchingId >= 0
     ? matchingId
     : findLatest((turn) => turn.role === 'agent' && turn.text === originalText)
-  if (index < 0 || turns[index].text === correctedText) return turns
+  if (index < 0) return turns
+  if (!hasSpokenContent(correctedText)) return turns.filter((_, position) => position !== index)
+  if (turns[index].text === correctedText) return turns
 
   return turns.map((turn, position) => position === index ? { ...turn, text: correctedText } : turn)
 }

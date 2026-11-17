@@ -36,7 +36,7 @@ You need Python 3.11+, Node.js, [uv](https://docs.astral.sh/uv/), an ElevenLabs 
 
 5. Open the local address shown by Vite. Select **Start interview** and allow microphone access. The Vite development server proxies `/api` to the backend on port 8000.
 
-The app needs a real ElevenLabs session to answer the application question “Have you used ElevenLabs?” accurately. Code or a visual preview alone does not establish that.
+The [validation log](docs/agent-validation.md) records a real browser voice session through the private ElevenLabs Agent, as well as the prompt checks in ElevenLabs Preview.
 
 ## Checks
 
@@ -45,7 +45,7 @@ cd backend && uv run --extra dev pytest -q
 cd frontend && npm test && npm run typecheck && npm run build
 ```
 
-The agent's manual behavior checks are in [scenario.md](agent/scenario.md), and the [validation log](docs/agent-validation.md) records the two checks completed in ElevenLabs Preview. The [architecture note](docs/architecture.md) explains the request flow and privacy boundaries.
+The agent's manual behavior checks are in [scenario.md](agent/scenario.md). The [architecture note](docs/architecture.md) explains the request flow and privacy boundaries.
 
 ## Design choices
 

@@ -24,6 +24,29 @@ describe('addTranscriptMessage', () => {
     const first = addTranscriptMessage([], { role: 'agent', text: 'I am worried about the move.' })
     expect(addTranscriptMessage(first, { role: 'agent', text: 'I am worried about the move.' })).toEqual(first)
   })
+
+  it('ignores punctuation-only and nonverbal silence turns', () => {
+    const turns: TranscriptTurn[] = [{ role: 'user', text: 'What happened?' }]
+    for (const text of ['...', '…', '—', '[sympathetic] ...', '[sighs]']) {
+      expect(addTranscriptMessage(turns, { role: 'agent', text })).toBe(turns)
+    }
+  })
+
+  it('removes known nonverbal cues but keeps ordinary bracketed speech', () => {
+    const turns = addTranscriptMessage([], {
+      role: 'agent',
+      text: '[anxious] The deadline is [six weeks] away. [sighs] See [Section 2].',
+    })
+    expect(turns).toEqual([
+      { role: 'agent', text: 'The deadline is [six weeks] away. See [Section 2].' },
+    ])
+  })
+
+  it('keeps words transcribed from the candidate even when bracketed', () => {
+    expect(addTranscriptMessage([], { role: 'user', text: '[anxious] I understand.' })).toEqual([
+      { role: 'user', text: '[anxious] I understand.' },
+    ])
+  })
 })
 
 describe('applyAgentResponseCorrection', () => {
@@ -67,5 +90,25 @@ describe('applyAgentResponseCorrection', () => {
     expect(applyAgentResponseCorrection(turns, {
       originalText: 'Hello', correctedText: 'Hi',
     })).toBe(turns)
+  })
+
+  it('matches cleaned original text and cleans the corrected response', () => {
+    const turns: TranscriptTurn[] = [{ role: 'agent', text: 'I am worried.', id: 'response-1' }]
+    expect(applyAgentResponseCorrection(turns, {
+      originalText: '[anxious] I am worried.',
+      correctedText: '[sympathetic] I understand. [sighs]',
+    })).toEqual([{ role: 'agent', text: 'I understand.', id: 'response-1' }])
+  })
+
+  it('removes a matched agent turn when its correction contains no speech', () => {
+    const turns: TranscriptTurn[] = [
+      { role: 'agent', text: 'I am worried.', id: 'response-1' },
+      { role: 'user', text: 'Why?', id: 'user-2' },
+    ]
+    expect(applyAgentResponseCorrection(turns, {
+      responseId: 'response-1',
+      originalText: 'I am worried.',
+      correctedText: '[sighs] ...',
+    })).toEqual([turns[1]])
   })
 })
